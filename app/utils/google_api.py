@@ -16,6 +16,17 @@ SPREADSHEET_BODY = {
                                                   'columnCount': 11}}}]
 }
 
+PERMISSIONS_BODY = {
+    'type': 'user',
+    'role': 'writer',
+    'emailAddress': ''
+}
+
+UPDATE_BODY_TEMPLATE = {
+    'majorDimension': 'ROWS',
+    'values': []
+}
+
 
 async def spreadsheets_create(wrapper_services: Aiogoogle) -> str:
     SPREADSHEET_BODY['properties']['title'] = 'Отчет на {}'.format(
@@ -34,9 +45,9 @@ async def set_user_permissions(
     spreadsheet_id: str,
     wrapper_services: Aiogoogle
 ) -> None:
-    permissions_body = {'type': 'user',
-                        'role': 'writer',
-                        'emailAddress': settings.email}
+    permissions_body = PERMISSIONS_BODY.copy()
+    permissions_body['emailAddress'] = settings.email
+
     service = await wrapper_services.discover('drive', 'v3')
     await wrapper_services.as_service_account(
         service.permissions.create(
@@ -65,10 +76,9 @@ async def spreadsheets_update_value(
             proj['project_lifetime']), str(proj['description'])]
         table_values.append(new_row)
 
-    update_body = {
-        'majorDimension': 'ROWS',
-        'values': table_values
-    }
+    update_body = UPDATE_BODY_TEMPLATE.copy()
+    update_body['values'] = table_values
+
     await wrapper_services.as_service_account(
         service.spreadsheets.values.update(
             spreadsheetId=spreadsheet_id,
